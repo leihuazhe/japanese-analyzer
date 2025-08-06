@@ -21,6 +21,7 @@ interface InputSectionProps {
   ttsProvider: 'edge' | 'gemini';
   onTtsProviderChange: (provider: 'edge' | 'gemini') => void;
   isAnalyzing?: boolean;
+  onAudioGenerated?: (audioUrl: string) => void;
 }
 
 // TTS配置选项
@@ -60,7 +61,8 @@ export default function InputSection({
   useStream = true, // 默认启用流式输出
   ttsProvider,
   onTtsProviderChange,
-  isAnalyzing = false
+  isAnalyzing = false,
+  onAudioGenerated
 }: InputSectionProps) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -138,6 +140,11 @@ export default function InputSection({
         const textToSpeak = stylePrompt + inputText;
         const url = await getJapaneseTtsAudioUrl(textToSpeak, userApiKey, 'gemini', { voice: selectedVoice, pitch: 0 });
         setTtsAudioUrl(url);
+      }
+      
+      // 通知父组件音频已生成
+      if (onAudioGenerated && url) {
+        onAudioGenerated(url);
       }
     } catch (e) {
       console.error('TTS error:', e);

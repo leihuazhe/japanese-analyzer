@@ -8,6 +8,8 @@ import SettingsModal from './components/SettingsModal';
 import TopToolbar from './components/TopToolbar';
 import LoginModal from './components/LoginModal';
 import AIChat from './components/AIChat';
+import SaveButton from './components/SaveButton';
+import HistoryPage from './components/HistoryPage';
 import { analyzeSentence, TokenData, DEFAULT_API_URL, streamAnalyzeSentence } from './services/api';
 import { FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
 
@@ -21,6 +23,9 @@ export default function Home() {
   const [isJsonParseError, setIsJsonParseError] = useState(false);
   const [translationTrigger, setTranslationTrigger] = useState(0);
   const [showFurigana, setShowFurigana] = useState(true);
+  const [currentTranslation, setCurrentTranslation] = useState('');
+  const [currentAudioUrl, setCurrentAudioUrl] = useState('');
+  const [showHistoryPage, setShowHistoryPage] = useState(false);
   
   // API设置相关状态
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -288,6 +293,11 @@ export default function Home() {
     }
   };
 
+  // 如果显示历史页面，渲染历史页面组件
+  if (showHistoryPage) {
+    return <HistoryPage onBack={() => setShowHistoryPage(false)} />;
+  }
+
   // 如果需要认证但未认证，只显示登录界面
   if (requiresAuth && !isAuthenticated) {
     return (
@@ -315,7 +325,10 @@ export default function Home() {
     <>
       <div className="min-h-screen flex flex-col items-center justify-start pt-16 sm:pt-20 lg:pt-24 p-3 sm:p-4 bg-white dark:bg-gray-900 transition-colors duration-200">
         {/* 顶部工具栏 */}
-        <TopToolbar onSettingsClick={() => setIsSettingsModalOpen(true)} />
+        <TopToolbar 
+          onSettingsClick={() => setIsSettingsModalOpen(true)}
+          onHistoryClick={() => setShowHistoryPage(true)}
+        />
         
         <div className="w-full max-w-3xl">
           <header className="text-center mb-8 sm:mb-12">
@@ -336,6 +349,7 @@ export default function Home() {
               ttsProvider={ttsProvider}
               onTtsProviderChange={handleTtsProviderChange}
               isAnalyzing={isAnalyzing}
+              onAudioGenerated={setCurrentAudioUrl}
             />
 
             {isAnalyzing && (!analyzedTokens.length || !useStream) && (
@@ -394,6 +408,19 @@ export default function Home() {
                 onShowFuriganaChange={setShowFurigana}
                 useStream={useStream}
               />
+              
+              {/* 保存按钮 */}
+              <div className="mt-4 flex justify-center">
+                <SaveButton
+                  sentence={currentSentence}
+                  tokens={analyzedTokens}
+                  translation={currentTranslation}
+                  audioUrl={currentAudioUrl}
+                  onSaved={(id) => {
+                    console.log('分析结果已保存，ID:', id);
+                  }}
+                />
+              </div>
             )}
 
             {currentSentence && (
@@ -403,6 +430,7 @@ export default function Home() {
                 userApiUrl={userApiUrl}
                 useStream={useStream}
                 trigger={translationTrigger}
+                onTranslationComplete={setCurrentTranslation}
               />
             )}
           </main>

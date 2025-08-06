@@ -9,6 +9,7 @@ interface TranslationSectionProps {
   userApiUrl?: string;
   useStream?: boolean;
   trigger?: number;
+  onTranslationComplete?: (translation: string) => void;
 }
 
 export default function TranslationSection({
@@ -16,7 +17,8 @@ export default function TranslationSection({
   userApiKey,
   userApiUrl,
   useStream = true, // 默认为true，保持向后兼容
-  trigger
+  trigger,
+  onTranslationComplete
 }: TranslationSectionProps) {
   const [translation, setTranslation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +43,7 @@ export default function TranslationSection({
             setTranslation(chunk);
             if (isDone) {
               setIsLoading(false);
+              onTranslationComplete?.(chunk);
             }
           },
           (error) => {
@@ -55,6 +58,7 @@ export default function TranslationSection({
         // 使用传统API进行翻译
         const translatedText = await translateText(japaneseText, userApiKey, userApiUrl);
         setTranslation(translatedText);
+        onTranslationComplete?.(translatedText);
         setIsLoading(false);
       }
     } catch (error) {
