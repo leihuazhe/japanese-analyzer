@@ -26,13 +26,13 @@ export default function Home() {
   const [currentTranslation, setCurrentTranslation] = useState('');
   const [currentAudioUrl, setCurrentAudioUrl] = useState('');
   const [showHistoryPage, setShowHistoryPage] = useState(false);
-  
+
   // API设置相关状态
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [userApiKey, setUserApiKey] = useState('');
   const [userApiUrl, setUserApiUrl] = useState(DEFAULT_API_URL);
   const [ttsProvider, setTtsProvider] = useState<'edge' | 'gemini'>('edge');
-  
+
   // 密码验证相关状态
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [requiresAuth, setRequiresAuth] = useState(false);
@@ -45,7 +45,7 @@ export default function Home() {
         const response = await fetch('/api/auth');
         const data = await response.json();
         setRequiresAuth(data.requiresAuth);
-        
+
         // 如果不需要验证，直接设置为已认证
         if (!data.requiresAuth) {
           setIsAuthenticated(true);
@@ -63,7 +63,7 @@ export default function Home() {
         setIsAuthenticated(true);
       }
     };
-    
+
     checkAuthRequirement();
   }, []);
 
@@ -73,23 +73,23 @@ export default function Home() {
     const storedApiUrl = localStorage.getItem('userApiUrl') || DEFAULT_API_URL;
     const storedUseStream = localStorage.getItem('useStream');
     const storedTtsProvider = localStorage.getItem('ttsProvider') as 'edge' | 'gemini' || 'edge';
-    
+
     setUserApiKey(storedApiKey);
     setUserApiUrl(storedApiUrl);
     setTtsProvider(storedTtsProvider);
-    
+
     // 只有当明确设置了值时才更新，否则保持默认值
     if (storedUseStream !== null) {
       setUseStream(storedUseStream === 'true');
     }
   }, []);
-  
+
   // 保存用户API设置
   const handleSaveSettings = (apiKey: string, apiUrl: string, streamEnabled: boolean) => {
     localStorage.setItem('userApiKey', apiKey);
     localStorage.setItem('userApiUrl', apiUrl);
     localStorage.setItem('useStream', streamEnabled.toString());
-    
+
     setUserApiKey(apiKey);
     setUserApiUrl(apiUrl);
     setUseStream(streamEnabled);
@@ -109,7 +109,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({password}),
       });
 
       const data = await response.json();
@@ -133,15 +133,15 @@ export default function Home() {
       if (!content || content.trim() === '') {
         return [];
       }
-      
+
       // 尝试整理内容
       let processedContent = content;
-      
+
       // 如果内容包含markdown代码块，尝试提取
       const jsonMatch = content.match(/```json\n([\s\S]*?)(\n```|$)/);
       if (jsonMatch && jsonMatch[1]) {
         processedContent = jsonMatch[1].trim();
-        
+
         // 检查是否是完整的JSON数组
         if (!processedContent.endsWith(']') && processedContent.startsWith('[')) {
           console.log("发现不完整的JSON块，尝试补全");
@@ -167,7 +167,7 @@ export default function Home() {
         // 直接查找JSON数组
         const arrayStart = processedContent.indexOf('[');
         const arrayEnd = processedContent.lastIndexOf(']');
-        
+
         if (arrayStart !== -1 && arrayEnd === -1) {
           // 找到开始但没找到结束，是不完整的
           const lastObjectEnd = processedContent.lastIndexOf('},');
@@ -182,14 +182,14 @@ export default function Home() {
           processedContent = processedContent.substring(arrayStart, arrayEnd + 1);
         }
       }
-      
+
       // 尝试解析处理后的内容
       try {
         const parsed = JSON.parse(processedContent) as TokenData[];
         // 验证数组中的对象是否有必要的字段
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const validTokens = parsed.filter(item => 
-            item && typeof item === 'object' && 'word' in item && 'pos' in item
+          const validTokens = parsed.filter(item =>
+              item && typeof item === 'object' && 'word' in item && 'pos' in item
           );
           if (validTokens.length > 0) {
             return validTokens;
@@ -227,16 +227,16 @@ export default function Home() {
   const shouldShowAnalyzer = (): boolean => {
     // 如果已经有解析结果，显示
     if (analyzedTokens.length > 0) return true;
-    
+
     // 如果没有内容，不显示
     if (!streamContent) return false;
-    
+
     // 如果有内容但解析失败，看情况
     if (isJsonParseError) {
       // 如果内容已经包含了完整的单词信息，可能是接近完成了
       return streamContent.includes('"word":') && streamContent.includes('"pos":');
     }
-    
+
     return false;
   };
 
@@ -250,34 +250,34 @@ export default function Home() {
     setStreamContent('');
     setAnalyzedTokens([]);
     setIsJsonParseError(false);
-    
+
     try {
       if (useStream) {
         // 使用流式API进行分析
         streamAnalyzeSentence(
-          text,
-          (chunk, isDone) => {
-            setStreamContent(chunk);
-            if (isDone) {
-              setIsAnalyzing(false);
-              // 最终解析完整的内容
-              const tokens = parseStreamContent(chunk);
-              if (tokens.length > 0) {
-                setAnalyzedTokens(tokens);
-                setIsJsonParseError(false);
-              } else if (chunk && chunk.includes('{') && chunk.includes('"word":')) {
-                // 最终内容仍然解析失败
-                setIsJsonParseError(true);
+            text,
+            (chunk, isDone) => {
+              setStreamContent(chunk);
+              if (isDone) {
+                setIsAnalyzing(false);
+                // 最终解析完整的内容
+                const tokens = parseStreamContent(chunk);
+                if (tokens.length > 0) {
+                  setAnalyzedTokens(tokens);
+                  setIsJsonParseError(false);
+                } else if (chunk && chunk.includes('{') && chunk.includes('"word":')) {
+                  // 最终内容仍然解析失败
+                  setIsJsonParseError(true);
+                }
               }
-            }
-          },
-          (error) => {
-            console.error('Stream analysis error:', error);
-            setAnalysisError(error.message || '流式解析错误');
-            setIsAnalyzing(false);
-          },
-          userApiKey,
-          userApiUrl
+            },
+            (error) => {
+              console.error('Stream analysis error:', error);
+              setAnalysisError(error.message || '流式解析错误');
+              setIsAnalyzing(false);
+            },
+            userApiKey,
+            userApiUrl
         );
       } else {
         // 使用传统API进行分析
@@ -295,169 +295,178 @@ export default function Home() {
 
   // 如果显示历史页面，渲染历史页面组件
   if (showHistoryPage) {
-    return <HistoryPage onBack={() => setShowHistoryPage(false)} />;
+    return <HistoryPage onBack={() => setShowHistoryPage(false)}/>;
   }
 
   // 如果需要认证但未认证，只显示登录界面
   if (requiresAuth && !isAuthenticated) {
     return (
-      <>
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-          <div className="text-center mb-8">
-            <h1 className="md-typescale-display-medium text-gray-800 dark:text-gray-100 transition-colors duration-200 mb-3">
-              日本語<span className="text-primary">文章解析器</span>
-            </h1>
-            <p className="md-typescale-title-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">
-              AI驱动・深入理解日语句子结构与词义
-            </p>
+        <>
+          <div
+              className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+            <div className="text-center mb-8">
+              <h1 className="md-typescale-display-medium text-gray-800 dark:text-gray-100 transition-colors duration-200 mb-3">
+                日本語<span className="text-primary">文章解析器</span>
+              </h1>
+              <p className="md-typescale-title-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                AI驱动・深入理解日语句子结构与词义
+              </p>
+            </div>
           </div>
-        </div>
-        <LoginModal
-          isOpen={true}
-          onLogin={handleLogin}
-          error={authError}
-        />
-      </>
+          <LoginModal
+              isOpen={true}
+              onLogin={handleLogin}
+              error={authError}
+          />
+        </>
     );
   }
 
   return (
-    <>
-      <div className="min-h-screen flex flex-col items-center justify-start pt-16 sm:pt-20 lg:pt-24 p-3 sm:p-4 bg-white dark:bg-gray-900 transition-colors duration-200">
-        {/* 顶部工具栏 */}
-        <TopToolbar 
-          onSettingsClick={() => setIsSettingsModalOpen(true)}
-          onHistoryClick={() => setShowHistoryPage(true)}
-        />
-        
-        <div className="w-full max-w-3xl">
-          <header className="text-center mb-8 sm:mb-12">
-            <h1 className="md-typescale-display-medium text-gray-800 dark:text-gray-100 transition-colors duration-200 mb-3">
-              日本語<span className="text-primary">文章解析器</span>
-            </h1>
-            <p className="md-typescale-title-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">
-              AI驱动・深入理解日语句子结构与词义
-            </p>
-          </header>
+      <>
+        <div
+            className="min-h-screen flex flex-col items-center justify-start pt-16 sm:pt-20 lg:pt-24 p-3 sm:p-4 bg-white dark:bg-gray-900 transition-colors duration-200">
+          {/* 顶部工具栏 */}
+          <TopToolbar
+              onSettingsClick={() => setIsSettingsModalOpen(true)}
+              onHistoryClick={() => setShowHistoryPage(true)}
+          />
 
-          <main>
-            <InputSection 
-              onAnalyze={handleAnalyze}
+          <div className="w-full max-w-3xl">
+            <header className="text-center mb-8 sm:mb-12">
+              <h1 className="md-typescale-display-medium text-gray-800 dark:text-gray-100 transition-colors duration-200 mb-3">
+                日本語<span className="text-primary">文章解析器</span>
+              </h1>
+              <p className="md-typescale-title-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                AI驱动・深入理解日语句子结构与词义
+              </p>
+            </header>
+
+            <main>
+              <InputSection
+                  onAnalyze={handleAnalyze}
+                  userApiKey={userApiKey}
+                  userApiUrl={userApiUrl}
+                  useStream={useStream}
+                  ttsProvider={ttsProvider}
+                  onTtsProviderChange={handleTtsProviderChange}
+                  isAnalyzing={isAnalyzing}
+                  onAudioGenerated={setCurrentAudioUrl}
+              />
+
+              {isAnalyzing && (!analyzedTokens.length || !useStream) && (
+                  <div className="premium-card">
+                    <div className="flex items-center justify-center py-6">
+                      <div className="loading-spinner"></div>
+                      <span
+                          className="ml-3 md-typescale-body-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">正在解析中，请稍候...</span>
+                    </div>
+                  </div>
+              )}
+
+              {isJsonParseError && streamContent && (
+                  <div className="premium-card">
+                    <div
+                        className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-3 sm:p-4 mb-4 transition-colors duration-200">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <FaExclamationTriangle className="text-yellow-500"/>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-yellow-700 dark:text-yellow-300 transition-colors duration-200">
+                            解析中，已经收到部分内容，但尚未形成完整的结果。
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                        className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md overflow-auto max-h-96 text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 transition-colors duration-200">
+                      {streamContent}
+                    </div>
+                  </div>
+              )}
+
+              {analysisError && (
+                  <div className="premium-card">
+                    <div
+                        className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-3 sm:p-4 transition-colors duration-200">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <FaExclamationCircle className="text-red-500"/>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-red-700 dark:text-red-300 transition-colors duration-200">
+                            解析错误：{analysisError}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              )}
+
+              {shouldShowAnalyzer() && (
+                  <>
+                    <AnalysisResult
+                        tokens={analyzedTokens}
+                        originalSentence={currentSentence}
+                        userApiKey={userApiKey}
+                        userApiUrl={userApiUrl}
+                        showFurigana={showFurigana}
+                        onShowFuriganaChange={setShowFurigana}
+                        useStream={useStream}
+                    />
+                    {/* 保存按钮 */}
+                    <div className="mt-4 flex justify-center">
+                      <SaveButton
+                          sentence={currentSentence}
+                          tokens={analyzedTokens}
+                          translation={currentTranslation}
+                          audioUrl={currentAudioUrl}
+                          onSaved={(id) => {
+                            console.log('分析结果已保存，ID:', id);
+                          }}
+                      />
+                    </div>
+                  </>
+              )}
+
+              {currentSentence && (
+                  <TranslationSection
+                      japaneseText={currentSentence}
+                      userApiKey={userApiKey}
+                      userApiUrl={userApiUrl}
+                      useStream={useStream}
+                      trigger={translationTrigger}
+                      onTranslationComplete={setCurrentTranslation}
+                  />
+              )}
+            </main>
+
+            <footer
+                className="text-center mt-8 sm:mt-12 py-4 sm:py-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
+              <p className="md-typescale-body-medium text-gray-500 dark:text-gray-400 transition-colors duration-200">&copy; 2025
+                高级日语解析工具 by Howen. All rights reserved.</p>
+
+            </footer>
+          </div>
+
+          {/* 设置模态框 */}
+          <SettingsModal
               userApiKey={userApiKey}
               userApiUrl={userApiUrl}
+              defaultApiUrl={DEFAULT_API_URL}
               useStream={useStream}
-              ttsProvider={ttsProvider}
-              onTtsProviderChange={handleTtsProviderChange}
-              isAnalyzing={isAnalyzing}
-              onAudioGenerated={setCurrentAudioUrl}
-            />
-
-            {isAnalyzing && (!analyzedTokens.length || !useStream) && (
-              <div className="premium-card">
-                <div className="flex items-center justify-center py-6">
-                  <div className="loading-spinner"></div>
-                  <span className="ml-3 md-typescale-body-medium text-gray-600 dark:text-gray-400 transition-colors duration-200">正在解析中，请稍候...</span>
-                </div>
-              </div>
-            )}
-
-            {isJsonParseError && streamContent && (
-              <div className="premium-card">
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-3 sm:p-4 mb-4 transition-colors duration-200">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <FaExclamationTriangle className="text-yellow-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300 transition-colors duration-200">
-                        解析中，已经收到部分内容，但尚未形成完整的结果。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md overflow-auto max-h-96 text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 transition-colors duration-200">
-                  {streamContent}
-                </div>
-              </div>
-            )}
-
-            {analysisError && (
-              <div className="premium-card">
-                <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-3 sm:p-4 transition-colors duration-200">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <FaExclamationCircle className="text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-red-700 dark:text-red-300 transition-colors duration-200">
-                        解析错误：{analysisError}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {shouldShowAnalyzer() && (
-              <AnalysisResult 
-                tokens={analyzedTokens}
-                originalSentence={currentSentence}
-                userApiKey={userApiKey}
-                userApiUrl={userApiUrl}
-                showFurigana={showFurigana}
-                onShowFuriganaChange={setShowFurigana}
-                useStream={useStream}
-              />
-              
-              {/* 保存按钮 */}
-              <div className="mt-4 flex justify-center">
-                <SaveButton
-                  sentence={currentSentence}
-                  tokens={analyzedTokens}
-                  translation={currentTranslation}
-                  audioUrl={currentAudioUrl}
-                  onSaved={(id) => {
-                    console.log('分析结果已保存，ID:', id);
-                  }}
-                />
-              </div>
-            )}
-
-            {currentSentence && (
-              <TranslationSection
-                japaneseText={currentSentence}
-                userApiKey={userApiKey}
-                userApiUrl={userApiUrl}
-                useStream={useStream}
-                trigger={translationTrigger}
-                onTranslationComplete={setCurrentTranslation}
-              />
-            )}
-          </main>
-
-          <footer className="text-center mt-8 sm:mt-12 py-4 sm:py-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-            <p className="md-typescale-body-medium text-gray-500 dark:text-gray-400 transition-colors duration-200">&copy; 2025 高级日语解析工具 by Howen. All rights reserved.</p>
-            
-          </footer>
+              onSaveSettings={handleSaveSettings}
+              isModalOpen={isSettingsModalOpen}
+              onModalClose={() => setIsSettingsModalOpen(!isSettingsModalOpen)}
+          />
         </div>
-        
-        {/* 设置模态框 */}
-        <SettingsModal
-          userApiKey={userApiKey}
-          userApiUrl={userApiUrl}
-          defaultApiUrl={DEFAULT_API_URL}
-          useStream={useStream}
-          onSaveSettings={handleSaveSettings}
-          isModalOpen={isSettingsModalOpen}
-          onModalClose={() => setIsSettingsModalOpen(!isSettingsModalOpen)}
+
+        {/* AI聊天助手 - 移到主容器外面 */}
+        <AIChat
+            userApiKey={userApiKey}
+            currentSentence={currentSentence}
         />
-      </div>
-      
-      {/* AI聊天助手 - 移到主容器外面 */}
-      <AIChat 
-        userApiKey={userApiKey}
-        currentSentence={currentSentence}
-      />
-    </>
+      </>
   );
 }

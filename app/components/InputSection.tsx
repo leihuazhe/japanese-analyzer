@@ -134,17 +134,20 @@ export default function InputSection({
           pitch: 0
         });
         setTtsAudioUrl(url);
+        // 通知父组件音频已生成
+        if (onAudioGenerated && url) {
+          onAudioGenerated(url);
+        }
       } else if (ttsProvider === 'gemini') {
         // 使用 Gemini TTS，添加风格控制
         const stylePrompt = TTS_STYLES.find(s => s.value === selectedStyle)?.prompt || '';
         const textToSpeak = stylePrompt + inputText;
         const url = await getJapaneseTtsAudioUrl(textToSpeak, userApiKey, 'gemini', { voice: selectedVoice, pitch: 0 });
         setTtsAudioUrl(url);
-      }
-      
-      // 通知父组件音频已生成
-      if (onAudioGenerated && url) {
-        onAudioGenerated(url);
+        // 通知父组件音频已生成
+        if (onAudioGenerated && url) {
+          onAudioGenerated(url);
+        }
       }
     } catch (e) {
       console.error('TTS error:', e);

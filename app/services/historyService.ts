@@ -29,7 +29,7 @@ export class HistoryService {
     tokens: TokenData[],
     translation?: string,
     audioUrl?: string
-  ): AnalysisHistory {
+  ): AnalysisHistory | null {
     const now = new Date();
     const newRecord: AnalysisHistory = {
       id: `analysis_${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -42,6 +42,12 @@ export class HistoryService {
     };
 
     const histories = this.getAll();
+    // 检查是否存在相同的句子
+    const existingRecord = histories.find(record => record.sentence === sentence);
+    if (existingRecord) {
+      console.warn('Sentence already exists in history, not saving:', sentence);
+      return null; // 存在相同的句子，不保存并返回 null
+    }
     histories.unshift(newRecord);
     
     // 限制最多保存100条记录
