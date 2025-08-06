@@ -14,7 +14,7 @@ export default function TopToolbar({ onSettingsClick, onHistoryClick }: TopToolb
       <div className="flex items-center gap-2 sm:gap-3">
         {/* GitHub 按钮 */}
         <a
-          href="https://github.com/cokice/japanese-analyzer"
+          href="https://github.com/leihuazhe/japanese-analyzer"
           target="_blank"
           rel="noopener noreferrer"
           title="GitHub 仓库"
