@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { translateText, streamTranslateText } from '../services/api';
+import MarkdownRenderer from '../components/MarkdownRenderer';
+
 
 interface TranslationSectionProps {
   japaneseText: string;
@@ -94,7 +96,7 @@ export default function TranslationSection({
           {isLoading && <span className="button-text">翻译中...</span>}
         </button>
       </div>
-
+      {/* 全文翻译模块, TODO: 增加详细的解释 */}
       {(isLoading || translation) && (
         <div id="fullTranslationCard" className="premium-card mt-4">
           <div className="flex justify-between items-center mb-3">
@@ -116,7 +118,7 @@ export default function TranslationSection({
                   <span className="ml-2 text-gray-500">正在翻译，请稍候...</span>
                 </div>
               ) : (
-                translation
+                  <MarkdownRenderer content={translation} />
               )}
             </div>
           )}

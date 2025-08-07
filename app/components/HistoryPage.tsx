@@ -6,6 +6,7 @@ import {HistoryService} from '../services/historyService';
 import {ExportService} from '../services/exportService';
 import {AnalysisHistory} from '../types/history';
 import {getPosClass, posChineseMap, containsKanji, generateFuriganaParts} from '../utils/helpers';
+import MarkdownRenderer from "@/app/components/MarkdownRenderer";
 
 interface HistoryPageProps {
     onBack: () => void;
@@ -310,9 +311,9 @@ export default function HistoryPage({onBack}: HistoryPageProps) {
                                                 翻译
                                             </h3>
                                             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                                                <p className="md-typescale-body-medium text-gray-800 dark:text-gray-100">
-                                                    {selectedHistory.translation}
-                                                </p>
+                                                <div className="md-typescale-body-medium text-gray-800 dark:text-gray-100">
+                                                    <MarkdownRenderer content={selectedHistory.translation} />
+                                                </div>
                                             </div>
                                         </div>
                                     )}

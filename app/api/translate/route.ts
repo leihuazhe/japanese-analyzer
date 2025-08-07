@@ -35,16 +35,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 构建翻译请求
-    const translationPrompt = `请将以下日文文本翻译成简体中文。重要：请务必保持与原文完全相同的段落和换行结构。
-
+    const translationPromptV2 = `将以下日文文本翻译成简体中文。
+    重要提示：
+严格保留原文的段落和换行结构。
+翻译内容后，空两行，然后详细解释原文的重点语法和词汇。
 原文：
-${text}
+${text}`;
 
-请仅返回翻译后的中文文本。`;
+//     const translationPrompt = `请将以下日文文本翻译成简体中文。重要：请务必保持与原文完全相同的段落和换行结构。
+//
+// 原文：
+// ${text}
+//
+// 请仅返回翻译后的中文文本。`;
     const payload = {
       model: model,
       reasoning_effort: "none",
-      messages: [{ role: "user", content: translationPrompt }],
+      messages: [{ role: "user", content: translationPromptV2 }],
       stream: stream
     };
 
