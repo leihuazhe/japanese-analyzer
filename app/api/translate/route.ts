@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 构建翻译请求
-    const translationPromptV2 = `将以下日文文本翻译成简体中文并进行解释。
+    const translationPromptV2 = `将以下日文文本翻译成简体中文并进行语法和词汇的详细。
     重要提示：
-请务必保持与原文完全相同的段落和换行结构,
+按照 a.翻译, b.语法和词汇, c.整体语感和理解 3大标题输出内容
 翻译内容后, 详细解释原文的重点语法和词汇。
 原文：
 ${text}`;
