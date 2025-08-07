@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const translationPromptV2 = `将以下日文文本翻译成简体中文。
     重要提示：
 严格保留原文的段落和换行结构。
-翻译内容后，空两行，然后详细解释原文的重点语法和词汇。
+翻译内容后, 然后详细解释原文的重点语法和词汇。
 原文：
 ${text}`;
 
